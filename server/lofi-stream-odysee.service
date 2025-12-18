@@ -1,0 +1,17 @@
+[Unit]
+Description=Lofi Stream to Odysee (Underwater Theme)
+After=network.target
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/opt/lofi-stream-odysee/server
+Environment=ODYSEE_KEY=YOUR_STREAM_KEY_HERE
+ExecStart=/opt/lofi-stream-odysee/server/stream.sh
+Restart=always
+RestartSec=10
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

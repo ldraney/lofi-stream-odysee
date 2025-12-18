@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>deep sea lofi</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="light-rays"></div>
+  <div class="bubbles">
+    <div class="bubble"></div>
+    <div class="bubble"></div>
+    <div class="bubble"></div>
+    <div class="bubble"></div>
+    <div class="bubble"></div>
+    <div class="bubble"></div>
+    <div class="bubble"></div>
+    <div class="bubble"></div>
+  </div>
+
+  <div class="underwater-scene">
+    <div class="porthole">
+      <div class="porthole-frame"></div>
+      <div class="porthole-glass"></div>
+      <div class="fish fish1"></div>
+      <div class="fish fish2"></div>
+      <div class="fish fish3"></div>
+      <div class="jellyfish">
+        <div class="jelly-body"></div>
+        <div class="tentacles">
+          <div class="tentacle"></div>
+          <div class="tentacle"></div>
+          <div class="tentacle"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="coral-left">
+      <div class="coral-branch"></div>
+      <div class="coral-branch"></div>
+      <div class="coral-branch"></div>
+    </div>
+
+    <div class="coral-right">
+      <div class="seaweed"></div>
+      <div class="seaweed"></div>
+      <div class="seaweed"></div>
+    </div>
+
+    <div class="depth-gauge">
+      <div class="gauge-display">
+        <div class="depth-value">2847m</div>
+        <div class="pressure">284 BAR</div>
+      </div>
+      <div class="waveform">
+        <span></span><span></span><span></span><span></span><span></span>
+        <span></span><span></span><span></span><span></span><span></span>
+      </div>
+    </div>
+
+    <div class="bioluminescent">
+      <div class="glow-orb"></div>
+      <div class="glow-orb"></div>
+      <div class="glow-orb"></div>
+      <div class="glow-orb"></div>
+      <div class="glow-orb"></div>
+    </div>
+  </div>
+
+  <div class="info">
+    <div class="title">abyssal lofi beats</div>
+    <div class="equalizer">
+      <span></span><span></span><span></span><span></span><span></span>
+    </div>
+  </div>
+
+  <script>
+    // Web Audio API - Deep Sea Ambient Lofi
+    let audioStarted = false;
+
+    function startAudio() {
+      if (audioStarted) return;
+      audioStarted = true;
+
+      const ctx = new (window.AudioContext || window.webkitAudioContext)();
+      const masterGain = ctx.createGain();
+      masterGain.gain.value = 0.25;
+      masterGain.connect(ctx.destination);
+
+      // Deep underwater ambience
+      const underwaterNoise = ctx.createBufferSource();
+      const noiseBuffer = ctx.createBuffer(1, ctx.sampleRate * 4, ctx.sampleRate);
+      const noiseData = noiseBuffer.getChannelData(0);
+      for (let i = 0; i < noiseBuffer.length; i++) {
+        noiseData[i] = (Math.random() * 2 - 1) * 0.5;
+      }
+      underwaterNoise.buffer = noiseBuffer;
+      underwaterNoise.loop = true;
+
+      const underwaterFilter = ctx.createBiquadFilter();
+      underwaterFilter.type = 'lowpass';
+      underwaterFilter.frequency.value = 200;
+      underwaterFilter.Q.value = 5;
+
+      const underwaterGain = ctx.createGain();
+      underwaterGain.gain.value = 0.15;
+
+      underwaterNoise.connect(underwaterFilter);
+      underwaterFilter.connect(underwaterGain);
+      underwaterGain.connect(masterGain);
+      underwaterNoise.start();
+
+      // Deep bass drone (pressure)
+      function createPressureDrone() {
+        const osc = ctx.createOscillator();
+        osc.type = 'sine';
+        osc.frequency.value = 40;
+
+        const osc2 = ctx.createOscillator();
+        osc2.type = 'sine';
+        osc2.frequency.value = 41.5; // Slight detune for movement
+
+        const gain = ctx.createGain();
+        gain.gain.value = 0.1;
+
+        const filter = ctx.createBiquadFilter();
+        filter.type = 'lowpass';
+        filter.frequency.value = 100;
+
+        osc.connect(filter);
+        osc2.connect(filter);
+        filter.connect(gain);
+        gain.connect(masterGain);
+
+        osc.start();
+        osc2.start();
+
+        // Slow modulation
+        const lfo = ctx.createOscillator();
+        lfo.type = 'sine';
+        lfo.frequency.value = 0.03;
+        const lfoGain = ctx.createGain();
+        lfoGain.gain.value = 0.05;
+        lfo.connect(lfoGain);
+        lfoGain.connect(gain.gain);
+        lfo.start();
+      }
+      createPressureDrone();
+
+      // Ethereal water pad - minor key for mystery
+      const chords = [
+        [130.81, 155.56, 196.00, 233.08], // C min7
+        [146.83, 174.61, 220.00, 261.63], // D dim
+        [155.56, 185.00, 233.08, 277.18], // Eb maj7
+        [174.61, 207.65, 261.63, 311.13], // F min7
+      ];
+
+      function playDeepPad(freqs, startTime, duration) {
+        freqs.forEach((freq) => {
+          const osc = ctx.createOscillator();
+          osc.type = 'sine';
+          osc.frequency.value = freq * 0.5; // One octave down
+
+          const osc2 = ctx.createOscillator();
+          osc2.type = 'triangle';
+          osc2.frequency.value = freq * 0.5 * 1.003;
+
+          const gain = ctx.createGain();
+          const filter = ctx.createBiquadFilter();
+          filter.type = 'lowpass';
+          filter.frequency.value = 600;
+          filter.Q.value = 2;
+
+          osc.connect(filter);
+          osc2.connect(filter);
+          filter.connect(gain);
+          gain.connect(masterGain);
+
+          // Slow underwater swell
+          gain.gain.setValueAtTime(0, startTime);
+          gain.gain.linearRampToValueAtTime(0.05, startTime + 3);
+          gain.gain.setValueAtTime(0.05, startTime + duration - 3);
+          gain.gain.linearRampToValueAtTime(0, startTime + duration);
+
+          osc.start(startTime);
+          osc.stop(startTime + duration);
+          osc2.start(startTime);
+          osc2.stop(startTime + duration);
+        });
+      }
+
+      function scheduleChords() {
+        const now = ctx.currentTime;
+        const chordDuration = 10;
+        chords.forEach((chord, i) => {
+          playDeepPad(chord, now + i * chordDuration, chordDuration + 1);
+        });
+        setTimeout(scheduleChords, chords.length * chordDuration * 1000);
+      }
+      scheduleChords();
+
+      // Whale song-like sounds
+      function playWhaleSound() {
+        if (Math.random() > 0.3) {
+          setTimeout(playWhaleSound, 8000 + Math.random() * 12000);
+          return;
+        }
+
+        const osc = ctx.createOscillator();
+        osc.type = 'sine';
+        const baseFreq = 80 + Math.random() * 60;
+        osc.frequency.value = baseFreq;
+
+        const gain = ctx.createGain();
+        const filter = ctx.createBiquadFilter();
+        filter.type = 'bandpass';
+        filter.frequency.value = 150;
+        filter.Q.value = 5;
+
+        osc.connect(filter);
+        filter.connect(gain);
+        gain.connect(masterGain);
+
+        const now = ctx.currentTime;
+        const duration = 3 + Math.random() * 2;
+
+        // Frequency sweep like whale call
+        osc.frequency.setValueAtTime(baseFreq, now);
+        osc.frequency.linearRampToValueAtTime(baseFreq * 1.5, now + duration * 0.3);
+        osc.frequency.linearRampToValueAtTime(baseFreq * 0.8, now + duration * 0.7);
+        osc.frequency.linearRampToValueAtTime(baseFreq, now + duration);
+
+        gain.gain.setValueAtTime(0, now);
+        gain.gain.linearRampToValueAtTime(0.06, now + 0.5);
+        gain.gain.setValueAtTime(0.06, now + duration - 1);
+        gain.gain.linearRampToValueAtTime(0, now + duration);
+
+        osc.start(now);
+        osc.stop(now + duration);
+
+        setTimeout(playWhaleSound, 8000 + Math.random() * 12000);
+      }
+      setTimeout(playWhaleSound, 3000);
+
+      // Sonar ping
+      function playSonar() {
+        const osc = ctx.createOscillator();
+        osc.type = 'sine';
+        osc.frequency.value = 1200;
+
+        const gain = ctx.createGain();
+        const filter = ctx.createBiquadFilter();
+        filter.type = 'bandpass';
+        filter.frequency.value = 1200;
+        filter.Q.value = 10;
+
+        osc.connect(filter);
+        filter.connect(gain);
+        gain.connect(masterGain);
+
+        const now = ctx.currentTime;
+        gain.gain.setValueAtTime(0.04, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 2);
+
+        osc.start(now);
+        osc.stop(now + 2);
+
+        setTimeout(playSonar, 15000 + Math.random() * 10000);
+      }
+      setTimeout(playSonar, 5000);
+
+      // Bubble sounds
+      function playBubble() {
+        const osc = ctx.createOscillator();
+        osc.type = 'sine';
+        const freq = 300 + Math.random() * 400;
+        osc.frequency.value = freq;
+
+        const gain = ctx.createGain();
+        osc.connect(gain);
+        gain.connect(masterGain);
+
+        const now = ctx.currentTime;
+        osc.frequency.setValueAtTime(freq, now);
+        osc.frequency.exponentialRampToValueAtTime(freq * 2, now + 0.1);
+
+        gain.gain.setValueAtTime(0.02, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.15);
+
+        osc.start(now);
+        osc.stop(now + 0.15);
+
+        setTimeout(playBubble, 500 + Math.random() * 2000);
+      }
+      setTimeout(playBubble, 1000);
+
+      // Creaking metal (submarine)
+      function playCreak() {
+        if (Math.random() > 0.2) {
+          setTimeout(playCreak, 10000 + Math.random() * 15000);
+          return;
+        }
+
+        const osc = ctx.createOscillator();
+        osc.type = 'sawtooth';
+        osc.frequency.value = 60 + Math.random() * 40;
+
+        const gain = ctx.createGain();
+        const filter = ctx.createBiquadFilter();
+        filter.type = 'bandpass';
+        filter.frequency.value = 200;
+        filter.Q.value = 8;
+
+        osc.connect(filter);
+        filter.connect(gain);
+        gain.connect(masterGain);
+
+        const now = ctx.currentTime;
+        gain.gain.setValueAtTime(0, now);
+        gain.gain.linearRampToValueAtTime(0.03, now + 0.1);
+        gain.gain.linearRampToValueAtTime(0, now + 0.5);
+
+        osc.start(now);
+        osc.stop(now + 0.5);
+
+        setTimeout(playCreak, 10000 + Math.random() * 15000);
+      }
+      setTimeout(playCreak, 8000);
+
+      console.log('Deep sea lofi audio started');
+    }
+
+    // Auto-start for streaming
+    document.addEventListener('click', startAudio, { once: true });
+    document.addEventListener('keydown', startAudio, { once: true });
+
+    setTimeout(() => {
+      startAudio();
+    }, 1000);
+  </script>
+</body>
+</html>
