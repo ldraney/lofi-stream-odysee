@@ -48,6 +48,9 @@ mkdir -p $XDG_RUNTIME_DIR
 # Ensure PulseAudio is running
 pulseaudio --check || pulseaudio --start --exit-idle-time=-1
 
+# Fix 1: Clear stream-restore database to prevent PulseAudio from "remembering" wrong routing
+rm -f ~/.config/pulse/*-stream-volumes.tdb 2>/dev/null || true
+
 # Create our own virtual audio sink if it doesn't exist
 if ! pactl list sinks short 2>/dev/null | grep -q "	$SINK_NAME	"; then
     pactl load-module module-null-sink sink_name=$SINK_NAME sink_properties=device.description=OdyseeSpeaker 2>/dev/null || true
@@ -57,8 +60,9 @@ fi
 export PULSE_SERVER=unix:$XDG_RUNTIME_DIR/pulse/native
 
 # Start Chromium with separate user data dir
+# Fix 2: PULSE_SINK forces audio to correct sink from the start
 echo "Starting Chromium..."
-chromium-browser \
+PULSE_SINK=$SINK_NAME chromium-browser \
     --no-sandbox \
     --disable-gpu \
     --disable-software-rasterizer \
@@ -84,6 +88,25 @@ sleep 1
 xdotool mousemove 640 360 click 1
 sleep 2
 
+# Fix 3: Aggressive audio routing - immediate check with retries, then background monitor
+route_audio() {
+    local retries=5
+    local i=0
+    while [ $i -lt $retries ]; do
+        SINK_INPUT=$(pactl list sink-inputs 2>/dev/null | grep -B 30 "window.x11.display = \":$DISPLAY_NUM\"" | grep "Sink Input" | grep -oP '#\K\d+' | tail -1 || true)
+        if [ -n "$SINK_INPUT" ]; then
+            pactl move-sink-input $SINK_INPUT $SINK_NAME 2>/dev/null && echo "Audio routed to $SINK_NAME (attempt $((i+1)))" && return 0
+        fi
+        sleep 1
+        i=$((i+1))
+    done
+    echo "Warning: Could not find sink-input for display :$DISPLAY_NUM after $retries attempts"
+}
+
+# Immediate routing attempt with retries
+echo "Routing audio..."
+route_audio
+
 # Background audio routing monitor - keeps audio routed correctly
 audio_monitor() {
     while true; do
@@ -100,11 +123,6 @@ audio_monitor() {
 }
 audio_monitor &
 echo "Started audio monitor"
-
-# Initial routing attempt
-sleep 3
-SINK_INPUT=$(pactl list sink-inputs 2>/dev/null | grep -B 30 "window.x11.display = \":$DISPLAY_NUM\"" | grep "Sink Input" | grep -oP '#\K\d+' | tail -1 || true)
-[ -n "$SINK_INPUT" ] && pactl move-sink-input $SINK_INPUT $SINK_NAME 2>/dev/null && echo "Initial route: sink-input $SINK_INPUT → $SINK_NAME"
 
 # Start FFmpeg streaming to Odysee
 echo "Starting FFmpeg stream to Odysee..."
